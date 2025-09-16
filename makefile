@@ -7,17 +7,9 @@ help: makefile
 all: build
 
 
-# Install dependencies
-.PHONY: install
-install:
-	npm init -y
-	npm install --save-dev esbuild @types/react @types/react-dom
-	npm install react react-dom
-
-
 # Build target to convert index.tsx to deployable index.html
 .PHONY: build
-build: install
+build:
 	mkdir -p dist
 	# Transform JSX to plain JavaScript using esbuild
 	cat index.tsx | sed 's/import React, { useState, useEffect } from '\''react'\'';//' | sed 's/export default HackerNewsTop100;//' > dist/component.jsx
