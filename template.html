@@ -8,6 +8,28 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .article-collapse {
+            animation: collapseOut 0.3s ease-out forwards;
+        }
+
+        @keyframes collapseOut {
+            0% {
+                opacity: 1;
+                max-height: 200px;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                max-height: 0;
+                transform: scale(0.95);
+                padding-top: 0;
+                padding-bottom: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+        }
+    </style>
 </head>
 
 <body>

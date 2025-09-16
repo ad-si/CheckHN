@@ -6,6 +6,7 @@ const HackerNewsTop100 = () => {
   const [error, setError] = useState(null);
   const [readArticles, setReadArticles] = useState(new Set());
   const [viewMode, setViewMode] = useState('unread'); // 'unread' or 'read'
+  const [collapsingArticles, setCollapsingArticles] = useState(new Set());
 
   useEffect(() => {
     // Load read articles from localStorage on component mount
@@ -26,16 +27,19 @@ const HackerNewsTop100 = () => {
       const readCount = currentReadArticles.size;
 
       // Use Algolia HN Search API to get top stories of all time
-      // Smart loading: only load enough pages to get 20 unread articles
+      // Smart loading: dynamically adjust page size based on read articles
       const allStories = [];
       const targetUnreadCount = 20;
       let unreadFound = 0;
       let page = 0;
-      const maxPages = Math.max(2, Math.ceil((targetUnreadCount + readCount) / 20) + 1);
+      const maxPages = 10; // Safety limit
+
+      // Calculate optimal page size: if we have many read articles, fetch larger pages
+      const estimatedPageSize = Math.max(20, Math.min(1000, targetUnreadCount + readCount + 10));
 
       while (unreadFound < targetUnreadCount && page < maxPages) {
         const response = await fetch(
-          `https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=20&page=${page}&numericFilters=points>100`
+          `https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=${estimatedPageSize}&page=${page}&numericFilters=points>100`
         );
         const data = await response.json();
 
@@ -92,10 +96,13 @@ const HackerNewsTop100 = () => {
 
       // Fetch details for read articles from Algolia
       const readPosts = [];
+      const maxPages = 10; // Safety limit
+      // Use larger page size since we might need to search through many articles
+      const pageSize = Math.min(1000, Math.max(50, readArticleIds.length + 20));
 
-      for (let page = 0; page < 20; page++) {
+      for (let page = 0; page < maxPages; page++) {
         const response = await fetch(
-          `https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=20&page=${page}&numericFilters=points>100`
+          `https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=${pageSize}&page=${page}&numericFilters=points>100`
         );
         const data = await response.json();
 
@@ -137,15 +144,31 @@ const HackerNewsTop100 = () => {
   };
 
   const handleCheckOff = (articleId) => {
-    const newReadArticles = new Set([...readArticles, articleId]);
-    setReadArticles(newReadArticles);
-
-    // Save to localStorage
-    localStorage.setItem('readArticles', JSON.stringify([...newReadArticles]));
-
-    // Remove the article from current posts if viewing unread
     if (viewMode === 'unread') {
-      setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
+      // Start collapse animation
+      setCollapsingArticles(prev => new Set([...prev, articleId]));
+
+      // Wait for animation to complete, then remove
+      setTimeout(() => {
+        const newReadArticles = new Set([...readArticles, articleId]);
+        setReadArticles(newReadArticles);
+
+        // Save to localStorage
+        localStorage.setItem('readArticles', JSON.stringify([...newReadArticles]));
+
+        // Remove from posts and stop collapsing
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
+        setCollapsingArticles(prev => {
+          const next = new Set(prev);
+          next.delete(articleId);
+          return next;
+        });
+      }, 300); // Match animation duration
+    } else {
+      // In read view, no animation needed
+      const newReadArticles = new Set([...readArticles, articleId]);
+      setReadArticles(newReadArticles);
+      localStorage.setItem('readArticles', JSON.stringify([...newReadArticles]));
     }
   };
 
@@ -280,7 +303,9 @@ const HackerNewsTop100 = () => {
           {posts.map((post, index) => (
             <div
               key={post.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow overflow-hidden ${
+                collapsingArticles.has(post.id) ? 'article-collapse' : ''
+              }`}
             >
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 flex items-center gap-2">
