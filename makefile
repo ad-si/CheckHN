@@ -24,6 +24,7 @@ clean:
 	rm -rf dist bundle.js package.json package-lock.json node_modules
 
 
-# Development server (optional)
-serve: build
-	cd dist && python3 -m http.server 8000
+# Development server
+.PHONY: dev
+dev: build
+	cd dist && serve
