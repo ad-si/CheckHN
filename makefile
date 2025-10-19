@@ -3,12 +3,7 @@ help: makefile
 	@tail -n +4 makefile | grep ".PHONY"
 
 
-# Default target
-all: build
-
-
-# Build target to convert index.tsx to deployable index.html
-.PHONY: build
+.PHONY: build  # Build target to convert index.tsx to deployable index.html
 build:
 	mkdir -p dist
 	# Build Tailwind CSS
@@ -20,14 +15,16 @@ build:
 	rm dist/component.jsx dist/component.js
 
 
-# Clean build artifacts
+.PHONY: test
+test: build
+
+
+.PHONY: dev  # Development server
+dev: build
+	cd dist && serve
+
+
 .PHONY: clean
 clean:
 	rm -rf dist
 	rm -rf node_modules
-
-
-# Development server
-.PHONY: dev
-dev: build
-	cd dist && serve
