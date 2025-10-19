@@ -573,7 +573,7 @@ function HackerNewsTop100 () {
             </a>
             <span> • </span>
             <a
-              href="https://github.com/ad-si/checkhn"
+              href="https://github.com/ad-si/CheckHN"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
