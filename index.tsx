@@ -1,58 +1,56 @@
-import React, { useState, useEffect } from 'react';
-
-const HackerNewsTop100 = () => {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [readArticles, setReadArticles] = useState(new Set());
-  const [savedArticles, setSavedArticles] = useState(new Set());
-  const [viewMode, setViewMode] = useState('unread'); // 'unread', 'read', or 'saved'
-  const [collapsingArticles, setCollapsingArticles] = useState(new Set());
+function HackerNewsTop100 () {
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [readArticles, setReadArticles] = useState(new Set())
+  const [savedArticles, setSavedArticles] = useState(new Set())
+  const [viewMode, setViewMode] = useState("unread"); // "unread", "read", or "saved"
+  const [collapsingArticles, setCollapsingArticles] = useState(new Set())
 
   useEffect(() => {
     // Load read articles from localStorage on component mount
-    const savedReadArticles = localStorage.getItem('readArticles');
+    const savedReadArticles = localStorage.getItem("readArticles")
     if (savedReadArticles) {
-      setReadArticles(new Set(JSON.parse(savedReadArticles)));
+      setReadArticles(new Set(JSON.parse(savedReadArticles)))
     }
     // Load saved articles from localStorage
-    const savedSavedArticles = localStorage.getItem('savedArticles');
+    const savedSavedArticles = localStorage.getItem("savedArticles")
     if (savedSavedArticles) {
-      setSavedArticles(new Set(JSON.parse(savedSavedArticles)));
+      setSavedArticles(new Set(JSON.parse(savedSavedArticles)))
     }
-    fetchTopPosts();
-  }, []);
+    fetchTopPosts()
+  }, [])
 
   const fetchTopPosts = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
 
       // Get read articles from localStorage
-      const savedReadArticles = localStorage.getItem('readArticles');
-      const currentReadArticles = savedReadArticles ? new Set(JSON.parse(savedReadArticles)) : new Set();
-      const readCount = currentReadArticles.size;
+      const savedReadArticles = localStorage.getItem("readArticles")
+      const currentReadArticles = savedReadArticles ? new Set(JSON.parse(savedReadArticles)) : new Set()
+      const readCount = currentReadArticles.size
 
       // Get saved articles from localStorage
-      const savedSavedArticles = localStorage.getItem('savedArticles');
-      const currentSavedArticles = savedSavedArticles ? new Set(JSON.parse(savedSavedArticles)) : new Set();
-      const savedCount = currentSavedArticles.size;
+      const savedSavedArticles = localStorage.getItem("savedArticles")
+      const currentSavedArticles = savedSavedArticles ? new Set(JSON.parse(savedSavedArticles)) : new Set()
+      const savedCount = currentSavedArticles.size
 
       // Use Algolia HN Search API to get top stories of all time
       // Smart loading: dynamically adjust page size based on read and saved articles
-      const allStories = [];
-      const targetUnreadCount = 20;
-      let unreadFound = 0;
-      let page = 0;
+      const allStories = []
+      const targetUnreadCount = 20
+      let unreadFound = 0
+      let page = 0
       const maxPages = 10; // Safety limit
 
       // Calculate optimal page size: if we have many read or saved articles, fetch larger pages
-      const estimatedPageSize = Math.max(20, Math.min(1000, targetUnreadCount + readCount + savedCount + 10));
+      const estimatedPageSize = Math.max(20, Math.min(1000, targetUnreadCount + readCount + savedCount + 10))
 
       while (unreadFound < targetUnreadCount && page < maxPages) {
         const response = await fetch(
           `https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=${estimatedPageSize}&page=${page}&numericFilters=points>100`
-        );
-        const data = await response.json();
+        )
+        const data = await response.json()
 
         if (data.hits && data.hits.length > 0) {
           // Process and filter stories as we fetch them
@@ -67,55 +65,55 @@ const HackerNewsTop100 = () => {
               time: story.created_at_i,
               descendants: story.num_comments
             }))
-            .filter(story => !currentReadArticles.has(story.id) && !currentSavedArticles.has(story.id));
+            .filter(story => !currentReadArticles.has(story.id) && !currentSavedArticles.has(story.id))
 
-          allStories.push(...pageStories);
-          unreadFound += pageStories.length;
+          allStories.push(...pageStories)
+          unreadFound += pageStories.length
         } else {
-          break;
+          break
         }
 
-        page++;
+        page++
       }
 
       // Sort by points (score) and take top 20 unread
       const topStories = allStories
         .sort((a, b) => b.score - a.score)
-        .slice(0, targetUnreadCount);
+        .slice(0, targetUnreadCount)
 
-      setPosts(topStories);
+      setPosts(topStories)
     } catch (err) {
-      setError('Failed to fetch Hacker News posts. Please try again.');
-      console.error('Error fetching posts:', err);
+      setError("Failed to fetch Hacker News posts. Please try again.")
+      console.error("Error fetching posts:", err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const fetchReadArticles = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
 
       // Get read article IDs from localStorage
-      const savedReadArticles = localStorage.getItem('readArticles');
-      const readArticleIds = savedReadArticles ? JSON.parse(savedReadArticles) : [];
+      const savedReadArticles = localStorage.getItem("readArticles")
+      const readArticleIds = savedReadArticles ? JSON.parse(savedReadArticles) : []
 
       if (readArticleIds.length === 0) {
-        setPosts([]);
-        return;
+        setPosts([])
+        return
       }
 
       // Fetch details for read articles from Algolia
-      const readPosts = [];
+      const readPosts = []
       const maxPages = 10; // Safety limit
       // Use larger page size since we might need to search through many articles
-      const pageSize = Math.min(1000, Math.max(50, readArticleIds.length + 20));
+      const pageSize = Math.min(1000, Math.max(50, readArticleIds.length + 20))
 
       for (let page = 0; page < maxPages; page++) {
         const response = await fetch(
           `https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=${pageSize}&page=${page}&numericFilters=points>100`
-        );
-        const data = await response.json();
+        )
+        const data = await response.json()
 
         if (data.hits && data.hits.length > 0) {
           const pageStories = data.hits
@@ -129,112 +127,112 @@ const HackerNewsTop100 = () => {
               time: story.created_at_i,
               descendants: story.num_comments
             }))
-            .filter(story => readArticleIds.includes(story.id));
+            .filter(story => readArticleIds.includes(story.id))
 
-          readPosts.push(...pageStories);
+          readPosts.push(...pageStories)
 
-          // Stop if we've found all read articles
+          // Stop if we"ve found all read articles
           if (readPosts.length >= readArticleIds.length) {
-            break;
+            break
           }
         } else {
-          break;
+          break
         }
       }
 
       // Sort by points (score)
-      const sortedReadPosts = readPosts.sort((a, b) => b.score - a.score);
-      setPosts(sortedReadPosts);
+      const sortedReadPosts = readPosts.sort((a, b) => b.score - a.score)
+      setPosts(sortedReadPosts)
 
     } catch (err) {
-      setError('Failed to fetch read articles. Please try again.');
-      console.error('Error fetching read articles:', err);
+      setError("Failed to fetch read articles. Please try again.")
+      console.error("Error fetching read articles:", err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleCheckOff = (articleId) => {
-    if (viewMode === 'unread') {
+    if (viewMode === "unread") {
       // Start collapse animation
-      setCollapsingArticles(prev => new Set([...prev, articleId]));
+      setCollapsingArticles(prev => new Set([...prev, articleId]))
 
       // Wait for animation to complete, then remove
       setTimeout(() => {
-        const newReadArticles = new Set([...readArticles, articleId]);
-        setReadArticles(newReadArticles);
+        const newReadArticles = new Set([...readArticles, articleId])
+        setReadArticles(newReadArticles)
 
         // Save to localStorage
-        localStorage.setItem('readArticles', JSON.stringify([...newReadArticles]));
+        localStorage.setItem("readArticles", JSON.stringify([...newReadArticles]))
 
         // Remove from posts and stop collapsing
-        setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId))
         setCollapsingArticles(prev => {
-          const next = new Set(prev);
-          next.delete(articleId);
-          return next;
-        });
+          const next = new Set(prev)
+          next.delete(articleId)
+          return next
+        })
       }, 300); // Match animation duration
     } else {
       // In read view, no animation needed
-      const newReadArticles = new Set([...readArticles, articleId]);
-      setReadArticles(newReadArticles);
-      localStorage.setItem('readArticles', JSON.stringify([...newReadArticles]));
+      const newReadArticles = new Set([...readArticles, articleId])
+      setReadArticles(newReadArticles)
+      localStorage.setItem("readArticles", JSON.stringify([...newReadArticles]))
     }
-  };
+  }
 
   const handleUncheckArticle = (articleId) => {
-    const newReadArticles = new Set([...readArticles]);
-    newReadArticles.delete(articleId);
-    setReadArticles(newReadArticles);
+    const newReadArticles = new Set([...readArticles])
+    newReadArticles.delete(articleId)
+    setReadArticles(newReadArticles)
 
     // Save to localStorage
-    localStorage.setItem('readArticles', JSON.stringify([...newReadArticles]));
+    localStorage.setItem("readArticles", JSON.stringify([...newReadArticles]))
 
     // Remove the article from current posts if viewing read articles
-    if (viewMode === 'read') {
-      setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
+    if (viewMode === "read") {
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId))
     }
-  };
+  }
 
   const switchToReadView = () => {
-    setViewMode('read');
-    fetchReadArticles();
-  };
+    setViewMode("read")
+    fetchReadArticles()
+  }
 
   const switchToUnreadView = () => {
-    setViewMode('unread');
-    fetchTopPosts();
-  };
+    setViewMode("unread")
+    fetchTopPosts()
+  }
 
   const switchToSavedView = () => {
-    setViewMode('saved');
-    fetchSavedArticles();
-  };
+    setViewMode("saved")
+    fetchSavedArticles()
+  }
 
   const fetchSavedArticles = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
 
       // Get saved article IDs from localStorage
-      const savedSavedArticles = localStorage.getItem('savedArticles');
-      const savedArticleIds = savedSavedArticles ? JSON.parse(savedSavedArticles) : [];
+      const savedSavedArticles = localStorage.getItem("savedArticles")
+      const savedArticleIds = savedSavedArticles ? JSON.parse(savedSavedArticles) : []
 
       if (savedArticleIds.length === 0) {
-        setPosts([]);
-        return;
+        setPosts([])
+        return
       }
 
       // Fetch details for saved articles from Algolia
-      const savedPosts = [];
+      const savedPosts = []
       const maxPages = 10; // Safety limit
-      const pageSize = Math.min(1000, Math.max(50, savedArticleIds.length + 20));
+      const pageSize = Math.min(1000, Math.max(50, savedArticleIds.length + 20))
 
       for (let page = 0; page < maxPages; page++) {
         const response = await fetch(
           `https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=${pageSize}&page=${page}&numericFilters=points>100`
-        );
-        const data = await response.json();
+        )
+        const data = await response.json()
 
         if (data.hits && data.hits.length > 0) {
           const pageStories = data.hits
@@ -248,62 +246,62 @@ const HackerNewsTop100 = () => {
               time: story.created_at_i,
               descendants: story.num_comments
             }))
-            .filter(story => savedArticleIds.includes(story.id));
+            .filter(story => savedArticleIds.includes(story.id))
 
-          savedPosts.push(...pageStories);
+          savedPosts.push(...pageStories)
 
-          // Stop if we've found all saved articles
+          // Stop if we"ve found all saved articles
           if (savedPosts.length >= savedArticleIds.length) {
-            break;
+            break
           }
         } else {
-          break;
+          break
         }
       }
 
       // Sort by points (score)
-      const sortedSavedPosts = savedPosts.sort((a, b) => b.score - a.score);
-      setPosts(sortedSavedPosts);
+      const sortedSavedPosts = savedPosts.sort((a, b) => b.score - a.score)
+      setPosts(sortedSavedPosts)
 
     } catch (err) {
-      setError('Failed to fetch saved articles. Please try again.');
-      console.error('Error fetching saved articles:', err);
+      setError("Failed to fetch saved articles. Please try again.")
+      console.error("Error fetching saved articles:", err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleToggleSaved = (articleId) => {
-    const newSavedArticles = new Set([...savedArticles]);
+    const newSavedArticles = new Set([...savedArticles])
     if (newSavedArticles.has(articleId)) {
-      newSavedArticles.delete(articleId);
+      newSavedArticles.delete(articleId)
       // Remove from posts if in saved view
-      if (viewMode === 'saved') {
-        setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
+      if (viewMode === "saved") {
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId))
       }
     } else {
-      newSavedArticles.add(articleId);
+      newSavedArticles.add(articleId)
       // Remove from posts if in unread view
-      if (viewMode === 'unread') {
-        setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
+      if (viewMode === "unread") {
+        setPosts(prevPosts => prevPosts.filter(post => post.id !== articleId))
       }
     }
-    setSavedArticles(newSavedArticles);
-    localStorage.setItem('savedArticles', JSON.stringify([...newSavedArticles]));
-  };
+    setSavedArticles(newSavedArticles)
+    localStorage.setItem("savedArticles", JSON.stringify([...newSavedArticles]))
+  }
 
   const formatDate = (timestamp) => {
-    return new Date(timestamp * 1000).toLocaleDateString('en-CA'); // YYYY-MM-DD format
-  };
+    return new Date(timestamp * 1000).toLocaleDateString("en-CA"); // YYYY-MM-DD format
+  }
 
   const formatUrl = (url) => {
-    if (!url) return null;
+    if (!url) return null
     try {
-      return new URL(url).hostname.replace('www.', '');
+      return new URL(url).hostname.replace("www.", "")
     } catch {
-      return url;
+      return url
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -314,20 +312,20 @@ const HackerNewsTop100 = () => {
               CheckHN
             </h1>
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-              {viewMode === 'unread'
-                ? 'Your checklist for the most popular Hacker News posts.'
-                : viewMode === 'read'
-                ? `Articles you've already read.`
-                : `Articles you've saved to read later.`
+              {viewMode === "unread"
+                ? "Your checklist for the most popular Hacker News posts."
+                : viewMode === "read"
+                ? `Articles you"ve already read.`
+                : `Articles you"ve saved to read later.`
               }
             </p>
             <div className="flex justify-center gap-1 border-b border-gray-300 dark:border-gray-700">
               <button
                 onClick={switchToUnreadView}
                 className={`px-6 py-2 font-medium transition-colors ${
-                  viewMode === 'unread'
-                    ? 'text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  viewMode === "unread"
+                    ? "text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
               >
                 Unread
@@ -335,9 +333,9 @@ const HackerNewsTop100 = () => {
               <button
                 onClick={switchToSavedView}
                 className={`px-6 py-2 font-medium transition-colors ${
-                  viewMode === 'saved'
-                    ? 'text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  viewMode === "saved"
+                    ? "text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
               >
                 Saved {savedArticles.size > 0 && `(${savedArticles.size})`}
@@ -345,9 +343,9 @@ const HackerNewsTop100 = () => {
               <button
                 onClick={switchToReadView}
                 className={`px-6 py-2 font-medium transition-colors ${
-                  viewMode === 'read'
-                    ? 'text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  viewMode === "read"
+                    ? "text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
               >
                 Read {readArticles.size > 0 && `(${readArticles.size})`}
@@ -360,7 +358,7 @@ const HackerNewsTop100 = () => {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -378,7 +376,7 @@ const HackerNewsTop100 = () => {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -389,20 +387,20 @@ const HackerNewsTop100 = () => {
             CheckHN
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-            {viewMode === 'unread'
-              ? 'Your checklist for the most popular Hacker News posts.'
-              : viewMode === 'read'
-              ? `Articles you've already read.`
-              : `Articles you've saved to read later.`
+            {viewMode === "unread"
+              ? "Your checklist for the most popular Hacker News posts."
+              : viewMode === "read"
+              ? `Articles you"ve already read.`
+              : `Articles you"ve saved to read later.`
             }
           </p>
           <div className="flex justify-center gap-1 border-b border-gray-300 dark:border-gray-700">
             <button
               onClick={switchToUnreadView}
               className={`px-6 py-2 font-medium transition-colors ${
-                viewMode === 'unread'
-                  ? 'text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                viewMode === "unread"
+                  ? "text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               Unread
@@ -410,9 +408,9 @@ const HackerNewsTop100 = () => {
             <button
               onClick={switchToSavedView}
               className={`px-6 py-2 font-medium transition-colors ${
-                viewMode === 'saved'
-                  ? 'text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                viewMode === "saved"
+                  ? "text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               Saved {savedArticles.size > 0 && `(${savedArticles.size})`}
@@ -420,9 +418,9 @@ const HackerNewsTop100 = () => {
             <button
               onClick={switchToReadView}
               className={`px-6 py-2 font-medium transition-colors ${
-                viewMode === 'read'
-                  ? 'text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                viewMode === "read"
+                  ? "text-orange-600 dark:text-orange-500 border-b-2 border-orange-600 dark:border-orange-500"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               Read {readArticles.size > 0 && `(${readArticles.size})`}
@@ -435,7 +433,7 @@ const HackerNewsTop100 = () => {
             <div
               key={post.id}
               className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow overflow-hidden ${
-                collapsingArticles.has(post.id) ? 'article-collapse' : ''
+                collapsingArticles.has(post.id) ? "article-collapse" : ""
               }`}
             >
               <div className="flex items-start gap-4">
@@ -443,8 +441,8 @@ const HackerNewsTop100 = () => {
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={viewMode === 'read'}
-                      onChange={() => viewMode === 'unread' ? handleCheckOff(post.id) : handleUncheckArticle(post.id)}
+                      checked={viewMode === "read"}
+                      onChange={() => viewMode === "unread" ? handleCheckOff(post.id) : handleUncheckArticle(post.id)}
                       className="w-4 h-4 text-orange-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
                     />
                     <span className="text-lg font-bold text-orange-500 w-8 text-center">
@@ -454,9 +452,9 @@ const HackerNewsTop100 = () => {
                   <button
                     onClick={() => handleToggleSaved(post.id)}
                     className={`w-4 h-4 flex items-center justify-center transition-colors ${
-                      savedArticles.has(post.id) ? 'text-orange-600 dark:text-orange-500' : 'text-gray-400 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-500'
+                      savedArticles.has(post.id) ? "text-orange-600 dark:text-orange-500" : "text-gray-400 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-500"
                     }`}
-                    title={savedArticles.has(post.id) ? 'Remove from saved' : 'Save for later'}
+                    title={savedArticles.has(post.id) ? "Remove from saved" : "Save for later"}
                   >
                     {savedArticles.has(post.id) ? (
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
@@ -541,17 +539,17 @@ const HackerNewsTop100 = () => {
         {posts.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-gray-600 dark:text-gray-400">
-              {viewMode === 'unread'
-                ? 'No unread posts found.'
-                : viewMode === 'read'
-                ? 'No read articles yet. Start checking off articles to see them here!'
-                : 'No saved articles yet. Click the bookmark icon to save articles for later!'
+              {viewMode === "unread"
+                ? "No unread posts found."
+                : viewMode === "read"
+                ? "No read articles yet. Start checking off articles to see them here!"
+                : "No saved articles yet. Click the bookmark icon to save articles for later!"
               }
             </p>
           </div>
         )}
 
-        {viewMode === 'unread' && (
+        {viewMode === "unread" && (
           <div className="mt-6 text-center">
             <button
               onClick={fetchTopPosts}
@@ -565,20 +563,26 @@ const HackerNewsTop100 = () => {
 
         <footer className="mt-12 pt-8 border-t border-gray-300 dark:border-gray-700 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Built by{' '}
             <a
               href="https://adriansieber.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
             >
-              Adrian Sieber
+              Built by Adrian Sieber
+            </a>
+            <span> • </span>
+            <a
+              href="https://github.com/ad-si/checkhn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
+            >
+              Code on GitHub
             </a>
           </p>
         </footer>
       </div>
     </div>
-  );
-};
-
-export default HackerNewsTop100;
+  )
+}
