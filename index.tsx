@@ -409,24 +409,6 @@ function HackerNewsTop100 () {
                 Read {readArticles.size > 0 && `(${readArticles.size})`}
               </button>
             </div>
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                onClick={handleExport}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                title="Export all articles to JSON file"
-              >
-                Export JSON
-              </button>
-              <label className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                Import JSON
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleImport}
-                  className="hidden"
-                />
-              </label>
-            </div>
           </header>
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
@@ -501,24 +483,6 @@ function HackerNewsTop100 () {
             >
               Read {readArticles.size > 0 && `(${readArticles.size})`}
             </button>
-          </div>
-          <div className="flex justify-center gap-2 mt-4">
-            <button
-              onClick={handleExport}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              title="Export all articles to JSON file"
-            >
-              Export JSON
-            </button>
-            <label className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-              Import JSON
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImport}
-                className="hidden"
-              />
-            </label>
           </div>
         </header>
 
@@ -656,6 +620,24 @@ function HackerNewsTop100 () {
         )}
 
         <footer className="mt-12 pt-8 border-t border-gray-300 dark:border-gray-700 text-center">
+          <div className="flex justify-center gap-2 mb-4">
+            <button
+              onClick={handleExport}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              title="Export all articles to JSON file"
+            >
+              Export JSON
+            </button>
+            <label className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+              Import JSON
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </label>
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             <a
               href="https://adriansieber.com/"
