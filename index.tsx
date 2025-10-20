@@ -290,6 +290,64 @@ function HackerNewsTop100 () {
     localStorage.setItem("savedArticles", JSON.stringify([...newSavedArticles]))
   }
 
+  const handleExport = () => {
+    const data = {
+      readArticles: [...readArticles],
+      savedArticles: [...savedArticles],
+      exportDate: new Date().toISOString()
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `checkhn-export-${new Date().toISOString().split("T")[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImport = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result)
+
+        // Merge imported articles with existing ones
+        const mergedReadArticles = new Set([...readArticles, ...(importedData.readArticles || [])])
+        const mergedSavedArticles = new Set([...savedArticles, ...(importedData.savedArticles || [])])
+
+        // Update state and localStorage
+        setReadArticles(mergedReadArticles)
+        setSavedArticles(mergedSavedArticles)
+        localStorage.setItem("readArticles", JSON.stringify([...mergedReadArticles]))
+        localStorage.setItem("savedArticles", JSON.stringify([...mergedSavedArticles]))
+
+        // Refresh current view
+        if (viewMode === "read") {
+          fetchReadArticles()
+        } else if (viewMode === "saved") {
+          fetchSavedArticles()
+        } else {
+          fetchTopPosts()
+        }
+
+        alert(`Successfully imported ${importedData.readArticles?.length || 0} read articles and ${importedData.savedArticles?.length || 0} saved articles!`)
+      } catch (error) {
+        alert("Error importing file. Please make sure it's a valid CheckHN export file.")
+        console.error("Import error:", error)
+      }
+    }
+    reader.readAsText(file)
+
+    // Reset the input so the same file can be imported again if needed
+    event.target.value = ""
+  }
+
   const formatDate = (timestamp) => {
     return new Date(timestamp * 1000).toLocaleDateString("en-CA"); // YYYY-MM-DD format
   }
@@ -350,6 +408,24 @@ function HackerNewsTop100 () {
               >
                 Read {readArticles.size > 0 && `(${readArticles.size})`}
               </button>
+            </div>
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                onClick={handleExport}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                title="Export all articles to JSON file"
+              >
+                Export JSON
+              </button>
+              <label className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                Import JSON
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImport}
+                  className="hidden"
+                />
+              </label>
             </div>
           </header>
           <div className="text-center py-12">
@@ -425,6 +501,24 @@ function HackerNewsTop100 () {
             >
               Read {readArticles.size > 0 && `(${readArticles.size})`}
             </button>
+          </div>
+          <div className="flex justify-center gap-2 mt-4">
+            <button
+              onClick={handleExport}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              title="Export all articles to JSON file"
+            >
+              Export JSON
+            </button>
+            <label className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+              Import JSON
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </label>
           </div>
         </header>
 
