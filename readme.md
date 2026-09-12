@@ -9,6 +9,12 @@ Checklist for the most popular Hacker News posts.
 - Save articles for later reading
 
 
+## Related
+
+- [HN Hall of Fame](https://www.orangecrumbs.com/hall/) -
+    Archive of links repeatedly shared and discussed on Hacker News over years.
+
+
 ## Development
 
 This project is built with React and TypeScript.
